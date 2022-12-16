@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+
+<title>today-to-do list</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<!-- jquery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- bootstrap 4 -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<!-- fullcalendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.7.0/main.min.css">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/fullcalendar@5.7.0/main.min.js"></script>
+
+<link href='https://use.fontawesome.com/releases/v5.0.6/css/all.css' rel='stylesheet'>
+<link href='../lib/main.css' rel='stylesheet' />
+<script src='../lib/main.js'></script>
+<script type="text/javascript" src="./fullcalendar-2.9.1/gcal.js"></script>
+<script type="text/javascript" src="./fullcalendar-2.9.1/lang-all.js"></script>
+<script type="text/javascript" src="./fullcalendar-2.9.1/fullcalendar.js" charset="euc-kr"></script>
+<script type="text/javascript" src="./fullcalendar-2.9.1/lib/moment.min.js"></script>
+<script src='../lib/locales/ko.js'></script>
+<script src='js/theme-chooser.js'></script>
+
+<script type="text/javascript">
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      aspectRatio: 1.35,
+      timeZone: 'UTC',
+      initialView: 'dayGridMonth',
+      displayEventTime: true, // don't show the time column in list view
+      displayEventEnd: true,
+      minTime :'10:00:00',
+      maxTime :'24:00:00',
+      allDaySlot: true,
+      locale:'ko',
+      firstDay: 1,
+      navLinks: true, // can click day/week names to navigate views
+      selectable: true,
+      selectMirror: true,
+      headerToolbar: {
+        left: 'prevYear,prev,next,nextYear, addEventButton',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay,listYear'
+      },customButtons: {
+                    addEventButton: { // 추가한 버튼 설정
+                        text : "일정 추가",  // 버튼 내용
+                        click : function(){ // 버튼 클릭 시 이벤트 추가
+                            $("#calendarModal").modal("show"); // modal 나타내기
+
+                            $("#addCalendar").on("click",function(){  // modal의 추가 버튼 클릭 시
+                                var content = $("#calendar_content").val();
+                                var start_date = $("#calendar_start_date").val();
+                                var end_date = $("#calendar_end_date").val();
+                                
+                                //내용 입력 여부 확인
+                                if(content == null || content == ""){
+                                    alert("내용을 입력하세요.");
+                                }else if(start_date == "" || end_date ==""){
+                                    alert("날짜를 입력하세요.");
+                                }else if(new Date(end_date)- new Date(start_date) < 0){ // date 타입으로 변경 후 확인
+                                    alert("종료일이 시작일보다 먼저입니다.");
+                                }else{ // 정상적인 입력 시
+                                    var obj = {
+                                        "title" : content,
+                                        "start" : start_date,
+                                        "end" : end_date
+                                    }//전송할 객체 생성
+
+                                    console.log(obj); //서버로 해당 객체를 전달해서 DB 연동 가능
+                                }
+                            });
+                        }
+                    }
+                },
+                editable: true,
+                dayMaxEvents: true, // allow "more" link when too many events
+                eventColor: 'purple',
+
+      // THIS KEY WON'T WORK IN PRODUCTION!!!
+      // To make your own Google API key, follow the directions here:
+      // http://fullcalendar.io/docs/google_calendar/
+      events: 'https://fullcalendar.io/api/demo-feeds/events.json?overload-day',
+      googleCalendarApiKey: "AIzaSyDcnW6WejpTOCffshGDDb4neIrXVUA1EAE",
+      //연동될 구글캘린더가 여러개인경우 eventSources를 이용하여 캘린더 머지함
+      eventLimit : true,
+      eventSources: [
+          {
+              title : "빨강색 배경 & 글자색 노랑색",
+              color : "#FF0000",
+              textColor : "#FFFF00",
+              start : "2016-05-02",
+              end : "2016-05-06T10:00:00"
+          },
+          {
+             googleCalendarId: '0dbca2b400628aa302b6b7fe54661e31e69db4749cc49e66c208df1ce99ac497@group.calendar.google.com',
+             color: 'green'
+          },
+          {  //대한민국 공휴일
+             googleCalendarId: 'ko.south_korea#holiday@group.v.calendar.google.com',
+             className : "koHolidays"
+          },
+          
+          {  // 개인 구글캘린더
+              googleCalendarId: '2008dltnals@gmail.com',
+              color: 'yellow'
+          }
+      ],
+      loading:function(bool) {
+                jQuery("#loading").toggle(bool);
+            },
+
+      eventClick: function(arg) {
+        // opens events in a popup window
+        window.open(arg.event.url, 'google-calendar-event', 'width=700,height=600');
+
+        arg.jsEvent.preventDefault() // don't navigate in main tab
+      },
+
+      loading: function(bool) {
+        document.getElementById('loading').style.display =
+          bool ? 'block' : 'none';
+      },
+      eventClick: function (info){
+                            if(confirm("'"+ info.event.title +"' 일정을 삭제하시겠습니까 ?")){
+                                // 확인 클릭 시
+                                info.event.remove();
+ 
+                            console.log(info.event);
+                            var events = new Array(); // Json 데이터를 받기 위한 배열 선언
+                            var obj = new Object();
+                                obj.title = info.event._def.title;
+                                obj.start = info.event._instance.range.start;
+                                obj.end = info.event._instance.range.end;
+                                events.push(obj);
+ 
+                            console.log(events);
+                            }
+                            $(function deleteData(){
+                                $.ajax({
+                                    url: "/full-calendar/calendar-admin-update",
+                                    method: "DELETE",
+                                    dataType: "json",
+                                    data: JSON.stringify(events),
+                                    contentType: 'application/json',
+                                })
+                            })
+                        },
+      
+
+    });
+
+    calendar.render();
+  });
+  function scheduleChoice(num, id, distinct, color, text) {
+        if(jQuery(".swingBar").eq(num).is(":checked")) {
+            jQuery("#calendar").fullCalendar("addEventSource", { googleCalendarId : id, className : distinct, color : color, textColor : text });
+        } else {
+            jQuery("#calendar").fullCalendar("removeEventSource", { googleCalendarId : id });
+        }
+  }
+
+</script>
+<style>
+
+  body {
+    margin: 40px 10px;
+    padding: 0;
+    font-family: "Lucida Grande", Helvetica Neue, Helvetica, sans-serif;
+    font-size: 13px;
+  }
+
+  #loading {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  #calendar {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  div.barKategorie {
+        float:left;
+        margin:5px;
+        padding-top:5px;
+        padding-bottom:5px;
+        padding-left:5px;
+        padding-right:10px;
+        border-radius:5px;
+        font-weight:bold;
+  }
+
+
+
+  /* 일요일 날짜 빨간색 */
+  .fc-day-sun a {
+          color: red;
+            text-decoration: none;
+      }
+      /* 토요일 날짜 파란색 */
+      .fc-day-sat a {
+          color: blue;
+            text-decoration: none;
+      }
+      
+
+</style>
+</head>
+<body>
+  <div id="calendarBox">
+      <div id='calendar'></div>
+  </div>
+
+  <div id='loading'>loading...</div>
+
+  <div style="width:100%;display:table-cell;float:center;">
+    <div class="barKategorie" style="background-color:#f984f9;color:#FFFFFF;">
+        <label>
+            <input type="checkbox" class="swingBar" onChange="scheduleChoice(0, 'ko.south_korea#holiday@group.v.calendar.google.com', 'usaHolidays', '#FF0000', '#FFFFFF');" checked/>
+            &nbsp;한국 공휴일
+        </label>
+    </div>
+    <div class="barKategorie" style="background-color:#acacf3;color:#ffffff;">
+      <label>
+          <input type="checkbox" class="swingBar" onChange="scheduleChoice(1, '2008dltnals@gmail.com', 'usaHolidays', '#0000FF', '#FFFF00');" checked/>
+          &nbsp;구글 캘린더
+      </label>
+  </div>
+  <!-- modal 추가 -->
+  <div class="modal fade" id="calendarModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">일정을 입력하세요.</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="taskId" class="col-form-label">일정 내용</label>
+                    <input type="text" class="form-control" id="calendar_content" name="calendar_content">
+                    <label for="taskId" class="col-form-label">시작 날짜</label>
+                    <input type="date" class="form-control" id="calendar_start_date" name="calendar_start_date">
+                    <label for="taskId" class="col-form-label">종료 날짜</label>
+                    <input type="date" class="form-control" id="calendar_end_date" name="calendar_end_date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-toggle="modal" id="calendarModal" data-target="#calendarModal" >추가</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                    id="sprintSettingModalClose">취소</button>
+            </div>
+  
+        </div>
+    </div>
+  </div>
+</body>
+</html>
